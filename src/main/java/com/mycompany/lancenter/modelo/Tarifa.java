@@ -1,13 +1,7 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package com.mycompany.lancenter.modelo;
 
-/**
- *
- * @author USUARIO
- */
 public class Tarifa {
-    
+    private int idTarifa;
+    private String tipoComputadora;
+    private double costoHora;
 }
