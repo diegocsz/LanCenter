@@ -33,6 +33,16 @@ public class NewJFrame extends JFrame {
         menu.add(btnEquipos);
         menu.add(btnTickets);
 
+        btnUsuarios.addActionListener(e -> {
+    getContentPane().removeAll();
+
+    add(menu, BorderLayout.WEST);
+    add(new PanelRegistroUsuarios(), BorderLayout.CENTER);
+
+    revalidate();
+    repaint();
+});
+        
         add(menu, BorderLayout.WEST);
 
         // ====== PANEL PRINCIPAL ======
@@ -105,8 +115,7 @@ public class NewJFrame extends JFrame {
         else
             b.setBackground(new Color(55, 71, 79));
 
-        b.addActionListener(e ->
-                JOptionPane.showMessageDialog(this, "XD"));
+       
 
         return b;
     }
