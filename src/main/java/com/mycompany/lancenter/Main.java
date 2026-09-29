@@ -3,6 +3,7 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
  */
 package com.mycompany.lancenter;
+import javax.swing.SwingUtilities;
 
 /**
  *
@@ -10,8 +11,8 @@ package com.mycompany.lancenter;
  */
 public class Main {
     public static void main(String[] args) {
-        java.awt.EventQueue.invokeLater(() -> {
-            new NewJFrame().setVisible(true);
+        SwingUtilities.invokeLater(() -> {
+            new LoginFrame().setVisible(true);
         });
     }
 }
