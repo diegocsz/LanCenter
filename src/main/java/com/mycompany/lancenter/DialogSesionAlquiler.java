@@ -2,6 +2,7 @@ package com.mycompany.lancenter;
 
 import java.awt.*;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.time.format.DateTimeFormatter;
 import javax.swing.*;
 import javax.swing.border.*;
@@ -11,11 +12,9 @@ public class DialogSesionAlquiler extends JDialog {
     private JComboBox<String> cbUsuario;
     private JComboBox<String> cbTipoEquipo;
     private JComboBox<String> cbEquipo;
-    private JLabel lblMediasHoras;
+    private JComboBox<String> cbHoraFin;
     private JLabel lblHoraInicio;
     private JButton btnIniciarSesion;
-
-    private int mediasHoras = 1;
 
     public DialogSesionAlquiler(Frame padre, String nombreEquipo) {
         super(padre, "Sesión de Alquiler", true);
@@ -45,36 +44,32 @@ public class DialogSesionAlquiler extends JDialog {
         cbEquipo = new JComboBox<>();
         cbEquipo.addItem("PC07-GAMER");
 
-        // Medias horas con botones - y +
-        lblMediasHoras = new JLabel(String.valueOf(mediasHoras), SwingConstants.CENTER);
-        lblMediasHoras.setFont(new Font("Segoe UI", Font.BOLD, 18));
-        lblMediasHoras.setPreferredSize(new Dimension(50, 32));
-
-        JButton btnMenos = crearBotonContador("-");
-        JButton btnMas = crearBotonContador("+");
-
-        btnMenos.addActionListener(e -> {
-            if (mediasHoras > 1) {
-                mediasHoras--;
-                lblMediasHoras.setText(String.valueOf(mediasHoras));
-            }
-        });
-
-        btnMas.addActionListener(e -> {
-            mediasHoras++;
-            lblMediasHoras.setText(String.valueOf(mediasHoras));
-        });
-
-        JPanel panelContador = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
-        panelContador.setOpaque(false);
-        panelContador.add(btnMenos);
-        panelContador.add(lblMediasHoras);
-        panelContador.add(btnMas);
-
-        // Hora de inicio
+        // Hora de inicio (ahora)
+        LocalDateTime ahora = LocalDateTime.now();
         DateTimeFormatter formato = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
-        lblHoraInicio = new JLabel(LocalDateTime.now().format(formato));
+        lblHoraInicio = new JLabel(ahora.format(formato));
         lblHoraInicio.setFont(new Font("Segoe UI", Font.PLAIN, 15));
+
+        // Hora de fin (selector cada 30 min, hasta 12 horas)
+        cbHoraFin = new JComboBox<>();
+        DateTimeFormatter formatoHora = DateTimeFormatter.ofPattern("hh:mm a");
+
+        LocalDateTime opcion = ahora.truncatedTo(ChronoUnit.HOURS);
+        while (opcion.isBefore(ahora)) {
+            opcion = opcion.plusMinutes(30);
+        }
+        if (ChronoUnit.MINUTES.between(ahora, opcion) < 30) {
+            opcion = opcion.plusMinutes(30);
+        }
+
+        for (int i = 0; i < 24; i++) {
+            String texto = opcion.format(formatoHora);
+            if (opcion.toLocalDate().isAfter(ahora.toLocalDate())) {
+                texto += " (+1 día)";
+            }
+            cbHoraFin.addItem(texto);
+            opcion = opcion.plusMinutes(30);
+        }
 
         panelSesion.add(crearLabel("Usuario:"));
         panelSesion.add(cbUsuario);
@@ -82,10 +77,10 @@ public class DialogSesionAlquiler extends JDialog {
         panelSesion.add(cbTipoEquipo);
         panelSesion.add(crearLabel("Equipo:"));
         panelSesion.add(cbEquipo);
-        panelSesion.add(crearLabel("Medias horas:"));
-        panelSesion.add(panelContador);
         panelSesion.add(crearLabel("Hora de inicio:"));
         panelSesion.add(lblHoraInicio);
+        panelSesion.add(crearLabel("Hora de fin:"));
+        panelSesion.add(cbHoraFin);
 
         // ===== BOTÓN =====
         btnIniciarSesion = new JButton("EMPEZAR SESIÓN");
@@ -128,22 +123,12 @@ public class DialogSesionAlquiler extends JDialog {
                 + "Usuario: " + cbUsuario.getSelectedItem() + "\n"
                 + "Tipo de equipo: " + cbTipoEquipo.getSelectedItem() + "\n"
                 + "Equipo: " + cbEquipo.getSelectedItem() + "\n"
-                + "Medias horas: " + mediasHoras + "\n"
-                + "Hora inicio: " + lblHoraInicio.getText();
+                + "Hora inicio: " + lblHoraInicio.getText() + "\n"
+                + "Hora fin: " + cbHoraFin.getSelectedItem();
 
         JOptionPane.showMessageDialog(this, mensaje, "Sesión iniciada",
                 JOptionPane.INFORMATION_MESSAGE);
         dispose();
-    }
-
-    private JButton crearBotonContador(String texto) {
-        JButton b = new JButton(texto);
-        b.setFont(new Font("Segoe UI", Font.BOLD, 18));
-        b.setForeground(Color.WHITE);
-        b.setBackground(new Color(33, 150, 243));
-        b.setFocusPainted(false);
-        b.setPreferredSize(new Dimension(45, 32));
-        return b;
     }
 
     private JLabel crearLabel(String texto) {
