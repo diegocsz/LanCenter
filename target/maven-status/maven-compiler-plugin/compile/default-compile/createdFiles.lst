@@ -1,7 +1,10 @@
+config\ConexionMySQL.class
 com\mycompany\lancenter\PanelTickets.class
 com\mycompany\lancenter\LoginFrame.class
 com\mycompany\lancenter\Main.class
 com\mycompany\lancenter\DialogSesionAlquiler.class
+dao\ClienteDAO.class
+dao\UsuarioDAO.class
 com\mycompany\lancenter\NewJFrame$1.class
 com\mycompany\lancenter\PanelTickets$LineaPunteada.class
 com\mycompany\lancenter\PanelRegistroUsuarios.class

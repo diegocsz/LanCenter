@@ -12,14 +12,13 @@ public class ConexionMySQL {
 
     private static final String USUARIO = "root";
 
-    private static final String PASSWORD =
-        System.getenv("LANCENTER_DB_PASSWORD");
+    // Contraseña directa de MySQL
+    private static final String PASSWORD = "diego";
 
     public static Connection conectar() throws SQLException {
-
         if (PASSWORD == null || PASSWORD.isEmpty()) {
             throw new SQLException(
-                "No se ha configurado la contrasena de MySQL"
+                    "No se ha configurado la contraseña de MySQL."
             );
         }
 
@@ -28,14 +27,14 @@ public class ConexionMySQL {
         );
     }
 
-    public static void main(String[] args) {
-
+    public static boolean verificarConexion() {
         try (Connection cn = conectar()) {
-            System.out.println("Conexion exitosa con MySQL");
-            System.out.println("Base de datos: lan_center");
-
+            return cn.isValid(3);
         } catch (SQLException e) {
-            System.out.println("Error: " + e.getMessage());
+            System.err.println(
+                    "Error de conexión MySQL: " + e.getMessage()
+            );
+            return false;
         }
     }
 }

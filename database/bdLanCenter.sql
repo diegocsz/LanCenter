@@ -181,3 +181,13 @@ SELECT COUNT(*) AS total_consolas FROM consolas;
 USE lan_center;
 
 SELECT * FROM cliente;
+
+USE lan_center;
+
+-- 1. Añadir el empleado Diego Salcedo
+INSERT INTO empleados (nombre, apellido, dni, cargo, turno) 
+VALUES ('Diego', 'Salcedo', '60888831', 'Administrador', 'Mañana');
+
+-- 2. Añadir su usuario administrador
+INSERT INTO usuarios (id_empleado, correo, password_hash, rol) 
+VALUES (LAST_INSERT_ID(), 'admin@lancenter.com', '123456', 'ADMIN');
