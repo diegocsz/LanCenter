@@ -53,6 +53,7 @@ public class LoginFrame extends JFrame {
         btnLogin.setFont(new Font("Segoe UI", Font.BOLD, 14));
 
         btnLogin.addActionListener(e -> login());
+        getRootPane().setDefaultButton(btnLogin);
 
         // Permitir iniciar sesión pulsando Enter.
         getRootPane().setDefaultButton(btnLogin);
