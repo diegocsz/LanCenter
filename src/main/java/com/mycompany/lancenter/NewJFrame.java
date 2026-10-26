@@ -1,297 +1,153 @@
 package com.mycompany.lancenter;
 
+import controlador.EquipoController;
+import dao.UsuarioDAO;
+import modelo.Equipo;
 import java.awt.*;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 import javax.swing.*;
-import javax.swing.border.*;
+import javax.swing.border.EmptyBorder;
+import javax.swing.border.LineBorder;
 
 public class NewJFrame extends JFrame {
+    private static final Color ACTIVO = new Color(33, 150, 243);
+    private static final Color NORMAL = new Color(55, 71, 79);
+    private final UsuarioDAO.UsuarioAutenticado usuario;
+    private final EquipoController equipos = new EquipoController();
+    private final JPanel menu = new JPanel();
+    private final List<JButton> botones = new ArrayList<>();
+    private JButton btnEquipos;
 
-    private final Color COLOR_ACTIVO = new Color(33, 150, 243);
-    private final Color COLOR_NORMAL = new Color(55, 71, 79);
-
-    public NewJFrame() {
-        initComponents();
-    }
-
-    private void initComponents() {
+    public NewJFrame(UsuarioDAO.UsuarioAutenticado usuario) {
+        this.usuario = usuario;
         setTitle("Sistema de Gestión");
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setDefaultCloseOperation(EXIT_ON_CLOSE);
         setSize(1100, 700);
+        setMinimumSize(new Dimension(860, 560));
         setLocationRelativeTo(null);
         setLayout(new BorderLayout());
 
-        JPanel menu = new JPanel();
-        menu.setPreferredSize(new Dimension(180, 700));
+        menu.setPreferredSize(new Dimension(190, 700));
         menu.setBackground(new Color(33, 43, 54));
-        menu.setLayout(new GridLayout(3, 1, 0, 10));
         menu.setBorder(new EmptyBorder(30, 10, 30, 10));
-
-        JButton btnUsuarios = crearBotonMenu("Registro Usuarios");
-        JButton btnEquipos = crearBotonMenu("Equipos");
-        JButton btnTickets = crearBotonMenu("Tickets");
-
-        menu.add(btnUsuarios);
-        menu.add(btnEquipos);
-        menu.add(btnTickets);
-
-        btnUsuarios.addActionListener(e -> {
-            mostrarPanel(
-                    menu,
-                    new PanelRegistroUsuarios(),
-                    btnUsuarios,
-                    btnEquipos,
-                    btnTickets
-            );
-        });
-
-        btnEquipos.addActionListener(e -> {
-            mostrarPanel(
-                    menu,
-                    crearPanelEquipos(),
-                    btnEquipos,
-                    btnUsuarios,
-                    btnTickets
-            );
-        });
-
-        btnTickets.addActionListener(e -> {
-            mostrarPanel(
-                    menu,
-                    new PanelTickets(),
-                    btnTickets,
-                    btnUsuarios,
-                    btnEquipos
-            );
-        });
-
-        add(menu, BorderLayout.WEST);
-        add(crearPanelEquipos(), BorderLayout.CENTER);
-
-        seleccionarBoton(
-                btnEquipos,
-                btnUsuarios,
-                btnTickets
-        );
+        boolean admin = "ADMIN".equals(usuario.rol());
+        menu.setLayout(new GridLayout(admin ? 4 : 3, 1, 0, 10));
+        JButton btnUsuarios = boton("Registro Usuarios");
+        btnEquipos = boton("Equipos");
+        JButton btnTickets = boton("Tickets");
+        btnUsuarios.addActionListener(e -> mostrar(btnUsuarios, new PanelRegistroUsuarios()));
+        btnEquipos.addActionListener(e -> mostrar(btnEquipos, panelEquipos()));
+        btnTickets.addActionListener(e -> mostrar(btnTickets, new PanelTickets()));
+        if (admin) {
+            JButton btnHistorial = boton("Historial de clientes");
+            btnHistorial.addActionListener(e ->
+                    mostrar(btnHistorial, new PanelHistorialClientes(usuario)));
+        }
+        mostrar(btnEquipos, panelEquipos());
     }
 
-    private void mostrarPanel(
-            JPanel menu,
-            JPanel panel,
-            JButton activo,
-            JButton boton2,
-            JButton boton3) {
+    private JButton boton(String texto) {
+        JButton b = new JButton(texto);
+        b.setFocusPainted(false);
+        b.setForeground(Color.WHITE);
+        b.setFont(new Font("Segoe UI", Font.BOLD, 15));
+        b.setBackground(NORMAL);
+        b.setBorder(new EmptyBorder(12, 8, 12, 8));
+        menu.add(b);
+        botones.add(b);
+        return b;
+    }
 
+    private void mostrar(JButton activo, JPanel panel) {
         getContentPane().removeAll();
-
         add(menu, BorderLayout.WEST);
         add(panel, BorderLayout.CENTER);
-
-        seleccionarBoton(
-                activo,
-                boton2,
-                boton3
-        );
-
+        for (JButton b : botones) b.setBackground(b == activo ? ACTIVO : NORMAL);
         revalidate();
         repaint();
     }
 
-    private void seleccionarBoton(
-            JButton activo,
-            JButton boton2,
-            JButton boton3) {
-
-        activo.setBackground(COLOR_ACTIVO);
-        boton2.setBackground(COLOR_NORMAL);
-        boton3.setBackground(COLOR_NORMAL);
-    }
-
-    private JButton crearBotonMenu(String texto) {
-        JButton b = new JButton(texto);
-
-        b.setFocusPainted(false);
-        b.setForeground(Color.WHITE);
-        b.setFont(new Font("Segoe UI", Font.BOLD, 15));
-        b.setBackground(COLOR_NORMAL);
-        b.setBorder(new EmptyBorder(12, 10, 12, 10));
-
-        return b;
-    }
-
-    private JPanel crearPanelEquipos() {
+    private JPanel panelEquipos() {
         JPanel principal = new JPanel(new BorderLayout());
         principal.setBackground(new Color(240, 240, 240));
-
         JLabel titulo = new JLabel("EQUIPOS");
         titulo.setFont(new Font("Segoe UI", Font.BOLD, 26));
-        titulo.setBorder(new EmptyBorder(20, 20, 10, 0));
+        titulo.setBorder(new EmptyBorder(20, 20, 10, 20));
         principal.add(titulo, BorderLayout.NORTH);
-
         JPanel contenido = new JPanel();
         contenido.setLayout(new BoxLayout(contenido, BoxLayout.Y_AXIS));
         contenido.setBackground(new Color(240, 240, 240));
-
-        contenido.add(crearTitulo("Computadoras (12)"));
-
-        JPanel pcs = new JPanel(new GridLayout(3, 4, 15, 15));
-        pcs.setOpaque(false);
-        pcs.setBorder(new EmptyBorder(10, 20, 20, 20));
-
-        for (int i = 1; i <= 12; i++) {
-            String tipo = (i <= 8) ? "GAMER" : "NORMAL";
-            String nombre = String.format("PC%02d-%s", i, tipo);
-
-            boolean ocupado = i <= 6;
-
-            Color color = ocupado
-                    ? new Color(220, 70, 70)
-                    : new Color(60, 180, 75);
-
-            int minutos = 0;
-
-            if (ocupado) {
-                minutos = (i <= 3) ? aleatorio(1, 10) : 0;
-            }
-
-            pcs.add(crearEquipo(
-                    nombre,
-                    color,
-                    "🖥",
-                    minutos
-            ));
+        try {
+            List<Equipo> lista = equipos.listarEquipos();
+            List<Equipo> pcs = lista.stream().filter(e -> !"Consola".equals(e.getTipo())).toList();
+            List<Equipo> consolas = lista.stream().filter(e -> "Consola".equals(e.getTipo())).toList();
+            contenido.add(grupo("Computadoras (" + pcs.size() + ")", pcs, 4));
+            contenido.add(grupo("Consolas (" + consolas.size() + ")", consolas, 5));
+        } catch (SQLException ex) {
+            JLabel error = new JLabel("No se pudieron cargar los equipos: " + ex.getMessage());
+            error.setBorder(new EmptyBorder(20, 20, 20, 20));
+            contenido.add(error);
         }
-
-        contenido.add(pcs);
-
-        contenido.add(crearTitulo("Consolas (5)"));
-
-        JPanel consolas = new JPanel(new GridLayout(1, 5, 15, 15));
-        consolas.setOpaque(false);
-        consolas.setBorder(new EmptyBorder(10, 20, 20, 20));
-
-        String[] nombres = {
-            "PS1",
-            "PS2",
-            "XBOX1",
-            "SWITCH1",
-            "SWITCH2"
-        };
-
-        for (int i = 0; i < nombres.length; i++) {
-            boolean ocupado = i < 2;
-
-            Color color = ocupado
-                    ? new Color(220, 70, 70)
-                    : new Color(60, 180, 75);
-
-            int minutos = 0;
-
-            if (ocupado) {
-                minutos = (i == 0) ? aleatorio(1, 10) : 0;
-            }
-
-            consolas.add(crearEquipo(
-                    nombres[i],
-                    color,
-                    "🎮",
-                    minutos
-            ));
-        }
-
-        contenido.add(consolas);
-
         JScrollPane scroll = new JScrollPane(contenido);
         scroll.setBorder(null);
-
         principal.add(scroll, BorderLayout.CENTER);
-
         return principal;
     }
 
-    private int aleatorio(int min, int max) {
-        return (int) (Math.random() * (max - min + 1)) + min;
+    private JPanel grupo(String titulo, List<Equipo> lista, int columnas) {
+        JPanel grupo = new JPanel(new BorderLayout());
+        grupo.setOpaque(false);
+        JLabel encabezado = new JLabel(titulo, SwingConstants.CENTER);
+        encabezado.setFont(new Font("Segoe UI", Font.BOLD, 20));
+        encabezado.setBorder(new EmptyBorder(16, 0, 12, 0));
+        grupo.add(encabezado, BorderLayout.NORTH);
+        JPanel cuadricula = new JPanel(new GridLayout(0, columnas, 15, 15));
+        cuadricula.setOpaque(false);
+        cuadricula.setBorder(new EmptyBorder(0, 20, 20, 20));
+        for (Equipo e : lista) cuadricula.add(tarjeta(e));
+        grupo.add(cuadricula, BorderLayout.CENTER);
+        return grupo;
     }
 
-    private JLabel crearTitulo(String texto) {
-        JLabel l = new JLabel(texto);
-        l.setFont(new Font("Segoe UI", Font.BOLD, 20));
-        l.setBorder(new EmptyBorder(10, 20, 0, 0));
-        return l;
-    }
-
-    private JPanel crearEquipo(
-            String nombre,
-            Color color,
-            String iconoStr,
-            int minutos) {
-
+    private JPanel tarjeta(Equipo equipo) {
         JPanel p = new JPanel();
         p.setLayout(new BoxLayout(p, BoxLayout.Y_AXIS));
-        p.setBackground(color);
-
-        p.setPreferredSize(new Dimension(125, 100));
-        p.setMinimumSize(new Dimension(125, 100));
-        p.setMaximumSize(new Dimension(125, 100));
-
-        p.setBorder(new CompoundBorder(
-                new LineBorder(Color.DARK_GRAY, 1),
-                new EmptyBorder(8, 8, 8, 8)
-        ));
-
-        JLabel icono = new JLabel(iconoStr);
-        icono.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 24));
+        p.setPreferredSize(new Dimension(130, 120));
+        p.setBorder(new LineBorder(Color.DARK_GRAY));
+        p.setBackground(switch (equipo.getEstado()) {
+            case "Disponible" -> new Color(52, 177, 76);
+            case "Ocupada" -> new Color(224, 68, 68);
+            default -> new Color(235, 190, 57);
+        });
+        JLabel icono = new JLabel("Consola".equals(equipo.getTipo()) ? "🎮" : "🖥");
+        icono.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 28));
         icono.setAlignmentX(Component.CENTER_ALIGNMENT);
-
-        JLabel texto = new JLabel(nombre);
-        texto.setFont(new Font("Segoe UI", Font.BOLD, 15));
-        texto.setForeground(Color.BLACK);
-        texto.setAlignmentX(Component.CENTER_ALIGNMENT);
-
-        p.add(Box.createVerticalStrut(2));
+        JLabel nombre = new JLabel(equipo.getNombre());
+        nombre.setFont(new Font("Segoe UI", Font.BOLD, 15));
+        nombre.setAlignmentX(Component.CENTER_ALIGNMENT);
+        JLabel estado = new JLabel(equipo.getEstado());
+        estado.setAlignmentX(Component.CENTER_ALIGNMENT);
+        p.add(Box.createVerticalGlue());
         p.add(icono);
-        p.add(Box.createVerticalStrut(4));
-        p.add(texto);
-
-        if (minutos > 0) {
-            JLabel lblTiempo = new JLabel(
-                    "Faltan " + minutos + " min"
-            );
-
-            lblTiempo.setFont(
-                    new Font(
-                            "Segoe UI",
-                            Font.PLAIN,
-                            12
-                    )
-            );
-
-            lblTiempo.setForeground(Color.BLACK);
-            lblTiempo.setAlignmentX(Component.CENTER_ALIGNMENT);
-
-            p.add(Box.createVerticalStrut(4));
-            p.add(lblTiempo);
+        p.add(nombre);
+        p.add(estado);
+        if ("Ocupada".equals(equipo.getEstado()) && equipo.getFinProgramado() != null) {
+            JLabel tiempo = new JLabel("Faltan " + equipos.obtenerMinutosRestantes(equipo) + " min");
+            tiempo.setAlignmentX(Component.CENTER_ALIGNMENT);
+            p.add(tiempo);
         }
-
-        p.setCursor(
-                new Cursor(
-                        Cursor.HAND_CURSOR
-                )
-        );
-
-        p.addMouseListener(
-                new java.awt.event.MouseAdapter() {
-                    @Override
-                    public void mouseClicked(
-                            java.awt.event.MouseEvent e) {
-
-                        new DialogSesionAlquiler(
-                                NewJFrame.this,
-                                nombre
-                        ).setVisible(true);
-                    }
+        p.add(Box.createVerticalGlue());
+        if (equipos.estaDisponible(equipo)) {
+            p.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+            p.addMouseListener(new java.awt.event.MouseAdapter() {
+                @Override public void mouseClicked(java.awt.event.MouseEvent event) {
+                    new DialogSesionAlquiler(NewJFrame.this, equipo, usuario.idEmpleado(),
+                            () -> mostrar(btnEquipos, panelEquipos())).setVisible(true);
                 }
-        );
-
+            });
+        }
         return p;
     }
 }

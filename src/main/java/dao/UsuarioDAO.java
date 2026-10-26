@@ -8,11 +8,13 @@ import java.sql.SQLException;
 
 public class UsuarioDAO {
 
-    public String autenticar(String correo, String clave)
+    public record UsuarioAutenticado(int idEmpleado, String rol) {}
+
+    public UsuarioAutenticado autenticar(String correo, String clave)
             throws SQLException {
 
         String sql = """
-            SELECT u.rol, u.password_hash
+            SELECT u.id_empleado, u.rol, u.password_hash
             FROM usuarios u
             INNER JOIN empleados e
                 ON u.id_empleado = e.id_empleado
@@ -34,7 +36,8 @@ public class UsuarioDAO {
                     // Comparación temporal para tu contraseña
                     // actual almacenada como texto plano.
                     if (claveGuardada.equals(clave)) {
-                        return rs.getString("rol");
+                        return new UsuarioAutenticado(
+                                rs.getInt("id_empleado"), rs.getString("rol"));
                     }
                 }
             }
