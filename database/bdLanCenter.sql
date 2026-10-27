@@ -191,3 +191,64 @@ VALUES ('Diego', 'Salcedo', '60888831', 'Administrador', 'Mañana');
 -- 2. Añadir su usuario administrador
 INSERT INTO usuarios (id_empleado, correo, password_hash, rol) 
 VALUES (LAST_INSERT_ID(), 'admin@lancenter.com', '123456', 'ADMIN');
+
+USE lan_center;
+
+DELIMITER $$
+
+-- 1. Calcular el importe definitivo de la sesión.
+DROP TRIGGER IF EXISTS trg_calcular_total_sesion$$
+
+CREATE TRIGGER trg_calcular_total_sesion
+BEFORE UPDATE ON sesion_alquiler
+FOR EACH ROW
+BEGIN
+    IF NEW.estado = 'FINALIZADA'
+       AND OLD.estado <> 'FINALIZADA' THEN
+
+        -- Si no se indicó la hora de finalización, utilizar la actual.
+        SET NEW.hora_fin_real = COALESCE(
+            NEW.hora_fin_real,
+            NOW()
+        );
+
+        -- Calcular el importe según el tiempo real utilizado.
+        SET NEW.total_pagado = ROUND(
+            TIMESTAMPDIFF(
+                SECOND,
+                NEW.hora_inicio,
+                NEW.hora_fin_real
+            ) / 3600.0 * NEW.precio_hora_aplicado,
+            2
+        );
+
+    END IF;
+END$$
+
+-- 2. Crear automáticamente el ticket al finalizar la sesión.
+DROP TRIGGER IF EXISTS trg_generar_ticket$$
+
+CREATE TRIGGER trg_generar_ticket
+AFTER UPDATE ON sesion_alquiler
+FOR EACH ROW
+BEGIN
+    IF NEW.estado = 'FINALIZADA'
+       AND OLD.estado <> 'FINALIZADA' THEN
+
+        INSERT INTO ticket (
+            id_sesion,
+            fecha_ticket,
+            hora_emision,
+            monto_alquiler
+        )
+        VALUES (
+            NEW.id_sesion,
+            CURRENT_DATE,
+            CURRENT_TIME,
+            NEW.total_pagado
+        );
+
+    END IF;
+END$$
+
+DELIMITER ;
