@@ -1,139 +1,83 @@
 package com.mycompany.lancenter;
 
+import dao.SesionDAO;
+import modelo.Equipo;
 import java.awt.*;
+import java.sql.SQLException;
 import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
 import java.time.format.DateTimeFormatter;
 import javax.swing.*;
-import javax.swing.border.*;
+import javax.swing.border.EmptyBorder;
 
 public class DialogSesionAlquiler extends JDialog {
+    private final Equipo equipo;
+    private final int idEmpleado;
+    private final Runnable alGuardar;
+    private final JComboBox<SesionDAO.Cliente> clientes = new JComboBox<>();
+    private final JComboBox<Integer> minutos = new JComboBox<>();
+    private final JLabel fin = new JLabel();
+    private static final DateTimeFormatter FORMATO =
+            DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
 
-    private JComboBox<String> cbUsuario;
-    private JComboBox<String> cbTipoEquipo;
-    private JComboBox<String> cbEquipo;
-    private JComboBox<String> cbHoraFin;
-    private JLabel lblHoraInicio;
-    private JButton btnIniciarSesion;
+    public DialogSesionAlquiler(Frame padre, Equipo equipo, int idEmpleado, Runnable alGuardar) {
+        super(padre, "Sesión de alquiler", true);
+        this.equipo = equipo;
+        this.idEmpleado = idEmpleado;
+        this.alGuardar = alGuardar;
+        setLayout(new BorderLayout(12, 12));
+        JPanel campos = new JPanel(new GridLayout(5, 2, 12, 12));
+        campos.setBorder(new EmptyBorder(22, 22, 12, 22));
+        campos.add(new JLabel("Cliente:"));
+        campos.add(clientes);
+        campos.add(new JLabel("Equipo:"));
+        campos.add(new JLabel(equipo.getNombre() + " · " + equipo.getTipo()));
+        campos.add(new JLabel("Inicio:"));
+        campos.add(new JLabel(LocalDateTime.now().format(FORMATO)));
+        campos.add(new JLabel("Duración reservada:"));
+        for (int m = 30; m <= 720; m += 30) minutos.addItem(m);
+        campos.add(minutos);
+        campos.add(new JLabel("Fin programado:"));
+        campos.add(fin);
+        minutos.addActionListener(e -> actualizarFin());
+        actualizarFin();
+        add(campos, BorderLayout.CENTER);
 
-    public DialogSesionAlquiler(Frame padre, String nombreEquipo) {
-        super(padre, "Sesión de Alquiler", true);
-
-        setLayout(new BorderLayout());
-        getContentPane().setBackground(new Color(240, 240, 240));
-
-        // ===== PANEL SESIÓN =====
-        JPanel panelSesion = new JPanel(new GridLayout(5, 2, 15, 15));
-        panelSesion.setBackground(Color.WHITE);
-        panelSesion.setBorder(new CompoundBorder(
-                new TitledBorder(new LineBorder(new Color(180, 180, 180)), "Sesión de Alquiler"),
-                new EmptyBorder(20, 20, 20, 20)));
-
-        // Usuario (seleccionable)
-        cbUsuario = new JComboBox<>();
-        cbUsuario.addItem("Seleccionar usuario");
-        cbUsuario.addItem("Diego Salcedo");
-        cbUsuario.addItem("Usuario 2");
-        cbUsuario.setSelectedItem("Diego Salcedo");
-
-        // Tipo de equipo (fijo: una sola opción, no se puede cambiar)
-        cbTipoEquipo = new JComboBox<>();
-        cbTipoEquipo.addItem("PC Gamer");
-
-        // Equipo (fijo: una sola opción, no se puede cambiar)
-        cbEquipo = new JComboBox<>();
-        cbEquipo.addItem("PC07-GAMER");
-
-        // Hora de inicio (ahora)
-        LocalDateTime ahora = LocalDateTime.now();
-        DateTimeFormatter formato = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
-        lblHoraInicio = new JLabel(ahora.format(formato));
-        lblHoraInicio.setFont(new Font("Segoe UI", Font.PLAIN, 15));
-
-        // Hora de fin (selector cada 30 min, hasta 12 horas)
-        cbHoraFin = new JComboBox<>();
-        DateTimeFormatter formatoHora = DateTimeFormatter.ofPattern("hh:mm a");
-
-        LocalDateTime opcion = ahora.truncatedTo(ChronoUnit.HOURS);
-        while (opcion.isBefore(ahora)) {
-            opcion = opcion.plusMinutes(30);
-        }
-        if (ChronoUnit.MINUTES.between(ahora, opcion) < 30) {
-            opcion = opcion.plusMinutes(30);
-        }
-
-        for (int i = 0; i < 24; i++) {
-            String texto = opcion.format(formatoHora);
-            if (opcion.toLocalDate().isAfter(ahora.toLocalDate())) {
-                texto += " (+1 día)";
-            }
-            cbHoraFin.addItem(texto);
-            opcion = opcion.plusMinutes(30);
-        }
-
-        panelSesion.add(crearLabel("Usuario:"));
-        panelSesion.add(cbUsuario);
-        panelSesion.add(crearLabel("Tipo de equipo:"));
-        panelSesion.add(cbTipoEquipo);
-        panelSesion.add(crearLabel("Equipo:"));
-        panelSesion.add(cbEquipo);
-        panelSesion.add(crearLabel("Hora de inicio:"));
-        panelSesion.add(lblHoraInicio);
-        panelSesion.add(crearLabel("Hora de fin:"));
-        panelSesion.add(cbHoraFin);
-
-        // ===== BOTÓN =====
-        btnIniciarSesion = new JButton("EMPEZAR SESIÓN");
-        btnIniciarSesion.setFont(new Font("Segoe UI", Font.BOLD, 16));
-        btnIniciarSesion.setForeground(Color.WHITE);
-        btnIniciarSesion.setBackground(new Color(33, 150, 243));
-        btnIniciarSesion.setFocusPainted(false);
-        btnIniciarSesion.setPreferredSize(new Dimension(200, 50));
-
-        JPanel panelBoton = new JPanel();
-        panelBoton.setOpaque(false);
-        panelBoton.setBorder(new EmptyBorder(10, 0, 15, 0));
-        panelBoton.add(btnIniciarSesion);
-
-        btnIniciarSesion.addActionListener(e -> iniciarSesion());
-
-        JPanel contenido = new JPanel(new BorderLayout());
-        contenido.setOpaque(false);
-        contenido.setBorder(new EmptyBorder(15, 20, 0, 20));
-        contenido.add(panelSesion, BorderLayout.CENTER);
-        contenido.add(panelBoton, BorderLayout.SOUTH);
-
-        add(contenido, BorderLayout.CENTER);
-
-        setPreferredSize(new Dimension(480, 430));
-        pack();
+        JButton iniciar = new JButton("Empezar sesión");
+        iniciar.addActionListener(e -> iniciar());
+        JPanel pie = new JPanel();
+        pie.setBorder(new EmptyBorder(0, 0, 15, 0));
+        pie.add(iniciar);
+        add(pie, BorderLayout.SOUTH);
+        setSize(510, 350);
         setLocationRelativeTo(padre);
-    }
-
-    private void iniciarSesion() {
-        if (cbUsuario.getSelectedIndex() == 0) {
-            JOptionPane.showMessageDialog(this,
-                    "Debe seleccionar un usuario.",
-                    "Usuario",
-                    JOptionPane.WARNING_MESSAGE);
-            return;
+        try {
+            for (SesionDAO.Cliente cliente : new SesionDAO().listarClientes()) clientes.addItem(cliente);
+            if (clientes.getItemCount() == 0) iniciar.setEnabled(false);
+        } catch (SQLException ex) {
+            iniciar.setEnabled(false);
+            JOptionPane.showMessageDialog(this, ex.getMessage(), "Error de MySQL",
+                    JOptionPane.ERROR_MESSAGE);
         }
-
-        String mensaje = "Sesión iniciada correctamente\n\n"
-                + "Usuario: " + cbUsuario.getSelectedItem() + "\n"
-                + "Tipo de equipo: " + cbTipoEquipo.getSelectedItem() + "\n"
-                + "Equipo: " + cbEquipo.getSelectedItem() + "\n"
-                + "Hora inicio: " + lblHoraInicio.getText() + "\n"
-                + "Hora fin: " + cbHoraFin.getSelectedItem();
-
-        JOptionPane.showMessageDialog(this, mensaje, "Sesión iniciada",
-                JOptionPane.INFORMATION_MESSAGE);
-        dispose();
     }
 
-    private JLabel crearLabel(String texto) {
-        JLabel label = new JLabel(texto);
-        label.setFont(new Font("Segoe UI", Font.BOLD, 14));
-        return label;
+    private void actualizarFin() {
+        Integer duracion = (Integer) minutos.getSelectedItem();
+        if (duracion != null) fin.setText(LocalDateTime.now().plusMinutes(duracion).format(FORMATO));
+    }
+
+    private void iniciar() {
+        SesionDAO.Cliente cliente = (SesionDAO.Cliente) clientes.getSelectedItem();
+        Integer duracion = (Integer) minutos.getSelectedItem();
+        if (cliente == null || duracion == null) return;
+        try {
+            new SesionDAO().iniciar(cliente.id(), idEmpleado, equipo,
+                    LocalDateTime.now().plusMinutes(duracion));
+            JOptionPane.showMessageDialog(this, "Sesión iniciada correctamente.");
+            dispose();
+            alGuardar.run();
+        } catch (SQLException ex) {
+            JOptionPane.showMessageDialog(this, ex.getMessage(), "No se pudo iniciar",
+                    JOptionPane.ERROR_MESSAGE);
+        }
     }
 }

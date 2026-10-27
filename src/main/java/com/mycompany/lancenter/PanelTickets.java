@@ -12,7 +12,8 @@ import java.util.List;
 import java.util.Locale;
 
 import javax.swing.*;
-import javax.swing.border.*;
+import javax.swing.border.EmptyBorder;
+import javax.swing.table.DefaultTableModel;
 
 public class PanelTickets extends JPanel {
 
