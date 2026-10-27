@@ -225,30 +225,38 @@ BEGIN
     END IF;
 END$$
 
--- 2. Crear automáticamente el ticket al finalizar la sesión.
-DROP TRIGGER IF EXISTS trg_generar_ticket$$
+
+USE lan_center;
+
+-- 2. Nueva del generar el ticket
+
+DROP TRIGGER IF EXISTS trg_generar_ticket;
+
+DELIMITER $$
 
 CREATE TRIGGER trg_generar_ticket
-AFTER UPDATE ON sesion_alquiler
+AFTER INSERT ON sesion_alquiler
 FOR EACH ROW
 BEGIN
-    IF NEW.estado = 'FINALIZADA'
-       AND OLD.estado <> 'FINALIZADA' THEN
-
-        INSERT INTO ticket (
-            id_sesion,
-            fecha_ticket,
-            hora_emision,
-            monto_alquiler
+    INSERT INTO ticket (
+        id_sesion,
+        fecha_ticket,
+        hora_emision,
+        monto_alquiler
+    )
+    VALUES (
+        NEW.id_sesion,
+        CURRENT_DATE,
+        CURRENT_TIME,
+        ROUND(
+            TIMESTAMPDIFF(
+                SECOND,
+                NEW.hora_inicio,
+                NEW.hora_fin_programada
+            ) / 3600.0 * NEW.precio_hora_aplicado,
+            2
         )
-        VALUES (
-            NEW.id_sesion,
-            CURRENT_DATE,
-            CURRENT_TIME,
-            NEW.total_pagado
-        );
-
-    END IF;
+    );
 END$$
 
 DELIMITER ;

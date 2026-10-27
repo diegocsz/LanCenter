@@ -1,3 +1,4 @@
+
 package dao;
 
 import config.ConexionMySQL;
@@ -22,7 +23,7 @@ public class TicketDAO {
                 t.id_ticket,
                 CONCAT(c.nombre, ' ', c.apellido) AS cliente,
                 s.hora_inicio,
-                s.hora_fin_real,
+                s.hora_fin_programada AS hora_fin_real,
                 t.fecha_ticket,
                 t.monto_alquiler
             FROM ticket t
