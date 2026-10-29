@@ -2,6 +2,7 @@ package modelo;
 
 import dao.SesionDAO;
 import java.sql.SQLException;
+import java.time.LocalDate;
 import java.util.List;
 
 public class HistorialClientesModel {
@@ -24,5 +25,14 @@ public class HistorialClientesModel {
     public List<SesionDAO.Cliente> buscarClientes(String texto)
             throws SQLException {
         return dao.buscarClientes(texto);
+    }
+
+    public List<SesionDAO.Visita> listar(String rol, int idCliente, LocalDate desde,
+            LocalDate hasta, String tipo, String estado) throws SQLException {
+        return dao.listar(rol, idCliente, desde, hasta, tipo, estado);
+    }
+
+    public void terminar(String rol, int idSesion, boolean cancelar) throws SQLException {
+        dao.terminar(rol, idSesion, cancelar);
     }
 }
