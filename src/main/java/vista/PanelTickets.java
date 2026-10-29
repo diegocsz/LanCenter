@@ -2,7 +2,8 @@ package vista;
 
 import dao.TicketDAO;
 import modelo.Ticket;
-
+import dao.MetricasTicketsDAO;
+import modelo.MetricasTickets;
 import java.awt.*;
 import java.math.BigDecimal;
 import java.sql.SQLException;
@@ -19,12 +20,14 @@ public class PanelTickets extends JPanel {
     private static final Color FONDO = new Color(240, 240, 240);
     private static final Color AZUL = new Color(33, 150, 243);
     private static final Color VERDE = new Color(60, 180, 75);
+    private static final Color NARANJA = new Color(245, 145, 40);
+    private static final Color MORADO = new Color(140, 100, 220);
 
-    private static final DateTimeFormatter FORMATO_HORA =
-            DateTimeFormatter.ofPattern("hh:mm a", Locale.US);
+    private static final DateTimeFormatter FORMATO_HORA
+            = DateTimeFormatter.ofPattern("hh:mm a", Locale.US);
 
-    private static final DateTimeFormatter FORMATO_FECHA =
-            DateTimeFormatter.ofPattern("dd/MM/yyyy");
+    private static final DateTimeFormatter FORMATO_FECHA
+            = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
     private final JPanel contenedorTickets;
     private final JPanel panelMetricas;
@@ -80,16 +83,24 @@ public class PanelTickets extends JPanel {
     // =====================================================
     // CARGAR TICKETS DESDE MYSQL
     // =====================================================
-
     public final void cargarTickets() {
 
         try {
 
-            TicketDAO dao = new TicketDAO();
-            List<Ticket> tickets = dao.listarTickets();
+            // Cargar los tickets individuales
+            TicketDAO ticketDAO = new TicketDAO();
+
+            List<Ticket> tickets = ticketDAO.listarTickets();
 
             mostrarTickets(tickets);
-            mostrarMetricas(tickets);
+
+            // Cargar las métricas directamente desde MySQL
+            MetricasTicketsDAO metricasDAO = new MetricasTicketsDAO();
+
+            MetricasTickets metricas
+                    = metricasDAO.obtenerMetricasDelDia();
+
+            mostrarMetricas(metricas);
 
         } catch (SQLException e) {
 
@@ -98,7 +109,7 @@ public class PanelTickets extends JPanel {
 
             JLabel error = new JLabel(
                     "<html><div style='text-align:center;'>"
-                    + "No se pudieron cargar los tickets.<br>"
+                    + "No se pudieron cargar los datos.<br>"
                     + "Verifica la conexión con MySQL."
                     + "</div></html>"
             );
@@ -114,7 +125,7 @@ public class PanelTickets extends JPanel {
 
             JOptionPane.showMessageDialog(
                     this,
-                    "Error al consultar los tickets:\n" + e.getMessage(),
+                    "Error al consultar los datos:\n" + e.getMessage(),
                     "Error de base de datos",
                     JOptionPane.ERROR_MESSAGE
             );
@@ -124,7 +135,6 @@ public class PanelTickets extends JPanel {
     // =====================================================
     // MOSTRAR TARJETAS
     // =====================================================
-
     private void mostrarTickets(List<Ticket> tickets) {
 
         contenedorTickets.removeAll();
@@ -276,7 +286,6 @@ public class PanelTickets extends JPanel {
     // =====================================================
     // FILAS DE INFORMACIÓN
     // =====================================================
-
     private JPanel crearFila(
             String etiqueta,
             String valor,
@@ -312,38 +321,19 @@ public class PanelTickets extends JPanel {
     // =====================================================
     // MÉTRICAS DEL DÍA
     // =====================================================
-
-    private void mostrarMetricas(List<Ticket> tickets) {
+    private void mostrarMetricas(MetricasTickets metricas) {
 
         panelMetricas.removeAll();
 
-        BigDecimal total = BigDecimal.ZERO;
-        int cantidad = 0;
-
         LocalDate hoy = LocalDate.now();
 
-        for (Ticket ticket : tickets) {
-
-            if (ticket.getFechaTicket().equals(hoy)) {
-
-                total = total.add(ticket.getMonto());
-                cantidad++;
-            }
-        }
-
-        BigDecimal promedio = cantidad > 0
-                ? total.divide(
-                        BigDecimal.valueOf(cantidad),
-                        2,
-                        java.math.RoundingMode.HALF_UP
-                )
-                : BigDecimal.ZERO;
-
         JLabel titulo = new JLabel("Resumen del día");
+
         titulo.setFont(new Font("Segoe UI", Font.BOLD, 20));
         titulo.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         JLabel fecha = new JLabel(hoy.format(FORMATO_FECHA));
+
         fecha.setFont(new Font("Segoe UI", Font.PLAIN, 13));
         fecha.setForeground(Color.GRAY);
         fecha.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -352,31 +342,76 @@ public class PanelTickets extends JPanel {
         panelMetricas.add(fecha);
         panelMetricas.add(Box.createVerticalStrut(15));
 
+        // 1. Monto acumulado
         panelMetricas.add(
                 crearMetrica(
                         "Monto acumulado",
-                        formatoMonto(total),
+                        formatoMonto(metricas.getMontoAcumulado()),
                         VERDE
                 )
         );
 
-        panelMetricas.add(Box.createVerticalStrut(15));
+        panelMetricas.add(Box.createVerticalStrut(12));
 
+        // 2. Sesiones alquiladas
         panelMetricas.add(
                 crearMetrica(
                         "Sesiones alquiladas",
-                        String.valueOf(cantidad),
+                        String.valueOf(metricas.getSesionesAlquiladas()),
                         AZUL
                 )
         );
 
-        panelMetricas.add(Box.createVerticalStrut(15));
+        panelMetricas.add(Box.createVerticalStrut(12));
 
+        // 3. Equipos utilizados
+        panelMetricas.add(
+                crearMetricaEquipos(metricas)
+        );
+
+        panelMetricas.add(Box.createVerticalStrut(12));
+
+        // 4. Horas alquiladas
+        panelMetricas.add(
+                crearMetrica(
+                        "Horas alquiladas",
+                        formatoDuracion(metricas.getMinutosAlquilados()),
+                        MORADO
+                )
+        );
+
+        panelMetricas.add(Box.createVerticalStrut(12));
+
+        // 5. Promedio por ticket
         panelMetricas.add(
                 crearMetrica(
                         "Promedio por ticket",
-                        formatoMonto(promedio),
+                        formatoMonto(metricas.getPromedioTicket()),
                         AZUL
+                )
+        );
+
+        panelMetricas.add(Box.createVerticalStrut(12));
+
+        // 6. Duración promedio
+        panelMetricas.add(
+                crearMetrica(
+                        "Duración promedio",
+                        formatoDuracion(
+                                metricas.getDuracionPromedioMinutos()
+                        ),
+                        MORADO
+                )
+        );
+
+        panelMetricas.add(Box.createVerticalStrut(12));
+
+        // 7. Ticket de mayor monto
+        panelMetricas.add(
+                crearMetrica(
+                        "Ticket de mayor monto",
+                        formatoMonto(metricas.getTicketMayorMonto()),
+                        NARANJA
                 )
         );
 
@@ -418,10 +453,83 @@ public class PanelTickets extends JPanel {
         return card;
     }
 
+    private JPanel crearMetricaEquipos(MetricasTickets metricas) {
+
+        JPanel card = new JPanel();
+
+        card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
+        card.setBackground(Color.WHITE);
+        card.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        card.setMaximumSize(new Dimension(Integer.MAX_VALUE, 145));
+
+        card.setBorder(
+                new CompoundBorder(
+                        new LineBorder(new Color(210, 210, 210), 1),
+                        new EmptyBorder(12, 16, 12, 16)
+                )
+        );
+
+        JLabel titulo = new JLabel("Equipos utilizados");
+
+        titulo.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        titulo.setForeground(Color.GRAY);
+        titulo.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        JLabel normal = new JLabel(
+                "NORMAL: " + metricas.getEquiposNormales()
+        );
+
+        normal.setFont(new Font("Segoe UI", Font.BOLD, 18));
+        normal.setForeground(AZUL);
+        normal.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        JLabel gamer = new JLabel(
+                "GAMER: " + metricas.getEquiposGamer()
+        );
+
+        gamer.setFont(new Font("Segoe UI", Font.BOLD, 18));
+        gamer.setForeground(VERDE);
+        gamer.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        JLabel consolas = new JLabel(
+                "CONSOLAS: " + metricas.getConsolas()
+        );
+
+        consolas.setFont(new Font("Segoe UI", Font.BOLD, 18));
+        consolas.setForeground(MORADO);
+        consolas.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        card.add(titulo);
+        card.add(Box.createVerticalStrut(8));
+        card.add(normal);
+        card.add(Box.createVerticalStrut(3));
+        card.add(gamer);
+        card.add(Box.createVerticalStrut(3));
+        card.add(consolas);
+
+        return card;
+    }
+
+    private String formatoDuracion(long minutos) {
+
+        long horas = minutos / 60;
+        long minutosRestantes = minutos % 60;
+
+        if (horas > 0 && minutosRestantes > 0) {
+            return horas + " h " + minutosRestantes + " min";
+        }
+
+        if (horas > 0) {
+            return horas + " h";
+        }
+
+        return minutosRestantes + " min";
+    }
+
     // =====================================================
     // FORMATO MONETARIO
     // =====================================================
-
     private String formatoMonto(BigDecimal monto) {
         return String.format(
                 Locale.US,
@@ -433,7 +541,6 @@ public class PanelTickets extends JPanel {
     // =====================================================
     // LÍNEA PUNTEADA
     // =====================================================
-
     private static class LineaPunteada extends JComponent {
 
         LineaPunteada() {

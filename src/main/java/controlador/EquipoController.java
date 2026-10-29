@@ -1,7 +1,3 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 
 package controlador;
 
@@ -21,38 +17,44 @@ public class EquipoController {
         equipoDAO = new EquipoDAO();
     }
 
-    // Obtener todos los equipos de MySQL
     public List<Equipo> listarEquipos() throws SQLException {
         return equipoDAO.listarEquipos();
     }
 
-    // Calcular minutos restantes del alquiler
     public long obtenerMinutosRestantes(Equipo equipo) {
-
         if (equipo.getFinProgramado() == null) {
             return 0;
         }
 
         long segundos = Duration.between(
-            LocalDateTime.now(),
-            equipo.getFinProgramado()
+                LocalDateTime.now(),
+                equipo.getFinProgramado()
         ).getSeconds();
 
         return Math.max(0, (segundos + 59) / 60);
     }
 
-    // Comprobar disponibilidad
     public boolean estaDisponible(Equipo equipo) {
-        return "Disponible".equals(equipo.getEstado());
+        if ("Disponible".equals(equipo.getEstado())) {
+            return true;
+        }
+
+        if ("Ocupada".equals(equipo.getEstado())
+                && equipo.getFinProgramado() != null) {
+
+            return !equipo.getFinProgramado()
+                    .isAfter(LocalDateTime.now());
+        }
+
+        return false;
     }
 
-    // Obtener el color según el estado
     public String obtenerColorEstado(Equipo equipo) {
+        if (estaDisponible(equipo)) {
+            return "VERDE";
+        }
 
         switch (equipo.getEstado()) {
-            case "Disponible":
-                return "VERDE";
-
             case "Ocupada":
                 return "ROJO";
 
@@ -64,16 +66,16 @@ public class EquipoController {
         }
     }
 
-    // Cambiar estado de mantenimiento
     public boolean cambiarMantenimiento(
             Equipo equipo, boolean mantenimiento)
             throws SQLException {
 
         String estadoActual = equipo.getEstado();
 
-        if ("Ocupada".equals(estadoActual)) {
+        if ("Ocupada".equals(estadoActual)
+                && !estaDisponible(equipo)) {
             throw new IllegalStateException(
-                "No se puede modificar un equipo ocupado"
+                    "No se puede modificar un equipo ocupado"
             );
         }
 
@@ -82,7 +84,7 @@ public class EquipoController {
                 : "Disponible";
 
         boolean actualizado = equipoDAO.cambiarEstado(
-            equipo, nuevoEstado
+                equipo, nuevoEstado
         );
 
         if (actualizado) {

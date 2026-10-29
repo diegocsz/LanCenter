@@ -1,4 +1,3 @@
-
 package dao;
 
 import config.ConexionMySQL;
@@ -19,29 +18,27 @@ public class TicketDAO {
         List<Ticket> tickets = new ArrayList<>();
 
         String sql = """
-            SELECT
-                t.id_ticket,
-                CONCAT(c.nombre, ' ', c.apellido) AS cliente,
-                s.hora_inicio,
-                s.hora_fin_programada AS hora_fin_real,
-                t.fecha_ticket,
-                t.monto_alquiler
-            FROM ticket t
-            INNER JOIN sesion_alquiler s
-                ON t.id_sesion = s.id_sesion
-            INNER JOIN cliente c
-                ON s.id_cliente = c.id_cliente
-            ORDER BY
-                t.fecha_ticket DESC,
-                t.hora_emision DESC,
-                t.id_ticket DESC
-            """;
+    SELECT
+        t.id_ticket,
+        CONCAT(c.nombre, ' ', c.apellido) AS cliente,
+        s.hora_inicio,
+        s.hora_fin_programada AS hora_fin_real,
+        t.fecha_ticket,
+        t.monto_alquiler
+    FROM ticket t
+    INNER JOIN sesion_alquiler s
+        ON t.id_sesion = s.id_sesion
+    INNER JOIN cliente c
+        ON s.id_cliente = c.id_cliente
+    WHERE t.fecha_ticket = CURDATE()
+    ORDER BY
+        t.fecha_ticket DESC,
+        t.hora_emision DESC,
+        t.id_ticket DESC
+    """;
 
         try (
-            Connection cn = ConexionMySQL.conectar();
-            PreparedStatement ps = cn.prepareStatement(sql);
-            ResultSet rs = ps.executeQuery()
-        ) {
+                Connection cn = ConexionMySQL.conectar(); PreparedStatement ps = cn.prepareStatement(sql); ResultSet rs = ps.executeQuery()) {
 
             while (rs.next()) {
 
@@ -49,12 +46,12 @@ public class TicketDAO {
                 Timestamp fin = rs.getTimestamp("hora_fin_real");
 
                 Ticket ticket = new Ticket(
-                    rs.getInt("id_ticket"),
-                    rs.getString("cliente"),
-                    inicio.toLocalDateTime(),
-                    fin.toLocalDateTime(),
-                    rs.getDate("fecha_ticket").toLocalDate(),
-                    rs.getBigDecimal("monto_alquiler")
+                        rs.getInt("id_ticket"),
+                        rs.getString("cliente"),
+                        inicio.toLocalDateTime(),
+                        fin.toLocalDateTime(),
+                        rs.getDate("fecha_ticket").toLocalDate(),
+                        rs.getBigDecimal("monto_alquiler")
                 );
 
                 tickets.add(ticket);

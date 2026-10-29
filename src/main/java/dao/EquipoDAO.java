@@ -1,3 +1,4 @@
+
 package dao;
 
 import config.ConexionMySQL;
@@ -12,6 +13,49 @@ public class EquipoDAO {
     public List<Equipo> listarEquipos() throws SQLException {
 
         List<Equipo> equipos = new ArrayList<>();
+
+        String finalizarSesiones = """
+            UPDATE sesion_alquiler
+            SET estado = 'FINALIZADA'
+            WHERE estado = 'ACTIVA'
+              AND hora_fin_programada <= NOW()
+            """;
+
+        String liberarGamer = """
+            UPDATE computadoras_gamer g
+            SET g.estado = 'Disponible'
+            WHERE g.estado = 'Ocupada'
+              AND NOT EXISTS (
+                  SELECT 1
+                  FROM sesion_alquiler s
+                  WHERE s.id_pc_gamer = g.id_pc_gamer
+                    AND s.estado = 'ACTIVA'
+              )
+            """;
+
+        String liberarNormal = """
+            UPDATE computadoras_normales n
+            SET n.estado = 'Disponible'
+            WHERE n.estado = 'Ocupada'
+              AND NOT EXISTS (
+                  SELECT 1
+                  FROM sesion_alquiler s
+                  WHERE s.id_pc_normal = n.id_pc_normal
+                    AND s.estado = 'ACTIVA'
+              )
+            """;
+
+        String liberarConsolas = """
+            UPDATE consolas c
+            SET c.estado = 'Disponible'
+            WHERE c.estado = 'Ocupada'
+              AND NOT EXISTS (
+                  SELECT 1
+                  FROM sesion_alquiler s
+                  WHERE s.id_consola = c.id_consola
+                    AND s.estado = 'ACTIVA'
+              )
+            """;
 
         String sql = """
             SELECT e.id, e.nombre, e.tipo, e.estado,
@@ -78,33 +122,59 @@ public class EquipoDAO {
                            'PC Normal', 'Consola'), e.id
             """;
 
-        try (Connection cn = ConexionMySQL.conectar();
-             PreparedStatement ps = cn.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
+        try (Connection cn = ConexionMySQL.conectar()) {
 
-            while (rs.next()) {
+            boolean autoCommitOriginal = cn.getAutoCommit();
 
-                Timestamp fin = rs.getTimestamp(
-                    "hora_fin_programada"
-                );
+            try {
+                cn.setAutoCommit(false);
 
-                Equipo equipo = new Equipo(
-                    rs.getInt("id"),
-                    rs.getString("nombre"),
-                    rs.getString("tipo"),
-                    rs.getString("estado"),
-                    rs.getBigDecimal("precio_hora"),
-                    fin != null ? fin.toLocalDateTime() : null
-                );
+                try (Statement st = cn.createStatement()) {
+                    st.executeUpdate(finalizarSesiones);
+                    st.executeUpdate(liberarGamer);
+                    st.executeUpdate(liberarNormal);
+                    st.executeUpdate(liberarConsolas);
+                }
 
-                equipos.add(equipo);
+                try (PreparedStatement ps = cn.prepareStatement(sql);
+                     ResultSet rs = ps.executeQuery()) {
+
+                    while (rs.next()) {
+                        Timestamp fin = rs.getTimestamp(
+                                "hora_fin_programada"
+                        );
+
+                        Equipo equipo = new Equipo(
+                                rs.getInt("id"),
+                                rs.getString("nombre"),
+                                rs.getString("tipo"),
+                                rs.getString("estado"),
+                                rs.getBigDecimal("precio_hora"),
+                                fin != null
+                                        ? fin.toLocalDateTime()
+                                        : null
+                        );
+
+                        equipos.add(equipo);
+                    }
+                }
+
+                cn.commit();
+
+            } catch (SQLException | RuntimeException ex) {
+                cn.rollback();
+                throw ex;
+
+            } finally {
+                cn.setAutoCommit(autoCommitOriginal);
             }
         }
 
         return equipos;
     }
 
-    public boolean cambiarEstado(Equipo equipo, String nuevoEstado)
+    public boolean cambiarEstado(
+            Equipo equipo, String nuevoEstado)
             throws SQLException {
 
         String tabla;
@@ -128,13 +198,13 @@ public class EquipoDAO {
 
             default:
                 throw new IllegalArgumentException(
-                    "Tipo de equipo desconocido"
+                        "Tipo de equipo desconocido"
                 );
         }
 
         String sql = "UPDATE " + tabla
-                   + " SET estado = ? WHERE "
-                   + columnaId + " = ?";
+                + " SET estado = ? WHERE "
+                + columnaId + " = ?";
 
         try (Connection cn = ConexionMySQL.conectar();
              PreparedStatement ps = cn.prepareStatement(sql)) {
@@ -146,4 +216,3 @@ public class EquipoDAO {
         }
     }
 }
-
