@@ -1,4 +1,4 @@
-package com.mycompany.lancenter;
+package vista;
 
 import dao.SesionDAO;
 import modelo.Equipo;

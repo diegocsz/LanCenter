@@ -1,4 +1,4 @@
-package com.mycompany.lancenter;
+package vista;
 
 import controlador.EquipoController;
 import dao.UsuarioDAO;

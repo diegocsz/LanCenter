@@ -1,4 +1,4 @@
-package com.mycompany.lancenter;
+package vista;
 
 import config.ConexionMySQL;
 import javax.swing.JOptionPane;

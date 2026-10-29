@@ -1,4 +1,4 @@
-package com.mycompany.lancenter;
+package vista;
 
 import dao.TicketDAO;
 import modelo.Ticket;

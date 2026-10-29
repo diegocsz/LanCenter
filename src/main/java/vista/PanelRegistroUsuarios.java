@@ -1,5 +1,5 @@
 
-package com.mycompany.lancenter;
+package vista;
 
 import dao.ClienteDAO;
 import java.awt.*;

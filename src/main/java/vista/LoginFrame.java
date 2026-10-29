@@ -1,4 +1,4 @@
-package com.mycompany.lancenter;
+package vista;
 
 import dao.UsuarioDAO;
 import java.awt.*;
