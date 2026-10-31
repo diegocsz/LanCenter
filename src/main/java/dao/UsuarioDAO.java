@@ -33,8 +33,6 @@ public class UsuarioDAO {
                     String claveGuardada =
                             rs.getString("password_hash");
 
-                    // Comparación temporal para tu contraseña
-                    // actual almacenada como texto plano.
                     if (claveGuardada.equals(clave)) {
                         return new UsuarioAutenticado(
                                 rs.getInt("id_empleado"), rs.getString("rol"));

@@ -21,19 +21,16 @@ public class PanelRegistroUsuarios extends JPanel {
         setLayout(new BorderLayout());
         setBackground(new Color(240, 240, 240));
 
-        // ===== TITULO =====
         JLabel titulo = new JLabel("REGISTRO DE USUARIOS");
         titulo.setFont(new Font("Segoe UI", Font.BOLD, 26));
         titulo.setBorder(new EmptyBorder(20, 20, 20, 20));
         add(titulo, BorderLayout.NORTH);
 
-        // ===== CONTENIDO =====
         JPanel contenido = new JPanel();
         contenido.setLayout(new BoxLayout(contenido, BoxLayout.Y_AXIS));
         contenido.setBackground(new Color(240, 240, 240));
         contenido.setBorder(new EmptyBorder(10, 30, 30, 30));
 
-        // ===== DATOS DEL CLIENTE =====
         JPanel panelCliente = new JPanel(new GridLayout(5, 2, 15, 15));
         panelCliente.setBackground(Color.WHITE);
         panelCliente.setBorder(new CompoundBorder(
@@ -61,7 +58,6 @@ public class PanelRegistroUsuarios extends JPanel {
 
         contenido.add(panelCliente);
 
-        // ===== BOTON REGISTRAR =====
         btnRegistrar = new JButton("Registrar");
         btnRegistrar.setFont(new Font("Segoe UI", Font.BOLD, 16));
         btnRegistrar.setForeground(Color.WHITE);
@@ -81,7 +77,6 @@ public class PanelRegistroUsuarios extends JPanel {
         add(contenido, BorderLayout.CENTER);
     }
 
-    // ===== REGISTRAR CLIENTE EN MYSQL =====
     private void registrar() {
 
         String dni = txtDni.getText().trim();
@@ -90,7 +85,6 @@ public class PanelRegistroUsuarios extends JPanel {
         String telefono = txtTelefono.getText().trim();
         String correo = txtCorreo.getText().trim();
 
-        // Validar campos obligatorios
         if (dni.isEmpty() || nombre.isEmpty() || apellido.isEmpty()) {
 
             JOptionPane.showMessageDialog(
@@ -102,7 +96,6 @@ public class PanelRegistroUsuarios extends JPanel {
             return;
         }
 
-        // Validar DNI
         if (!dni.matches("\\d{8}")) {
 
             JOptionPane.showMessageDialog(
@@ -114,7 +107,6 @@ public class PanelRegistroUsuarios extends JPanel {
             return;
         }
 
-        // Guardar cliente en MySQL
         try {
 
             ClienteDAO dao = new ClienteDAO();
@@ -132,7 +124,6 @@ public class PanelRegistroUsuarios extends JPanel {
                         JOptionPane.INFORMATION_MESSAGE
                 );
 
-                // Limpiar los campos
                 txtDni.setText("");
                 txtNombre.setText("");
                 txtApellido.setText("");
@@ -172,7 +163,6 @@ public class PanelRegistroUsuarios extends JPanel {
         }
     }
 
-    // ===== CREAR ETIQUETAS =====
     private JLabel crearLabel(String texto) {
 
         JLabel label = new JLabel(texto);
