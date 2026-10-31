@@ -1,38 +1,44 @@
 package modelo;
 
 import dao.SesionDAO;
+import dao.ClienteDAO;
+import dao.TicketDAO;
+import dao.VisitaDAO;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.List;
 
 public class HistorialClientesModel {
 
-    private final SesionDAO dao = new SesionDAO();
+    private final SesionDAO sesionDAO = new SesionDAO();
+    private final ClienteDAO clienteDAO = new ClienteDAO();
+    private final TicketDAO ticketDAO = new TicketDAO();
+    private final VisitaDAO visitaDAO = new VisitaDAO();
 
     public int contarTickets() throws SQLException {
-        return dao.contarTicketsHistoricos();
+        return ticketDAO.contarTicketsHistoricos();
     }
 
-    public List<SesionDAO.TicketHistorial> listarTodos() throws SQLException {
-        return dao.listarHistorialTickets(null);
+    public List<TicketHistorial> listarTodos() throws SQLException {
+        return ticketDAO.listarHistorialTickets(null);
     }
 
-    public List<SesionDAO.TicketHistorial> buscarPorCliente(int idCliente)
+    public List<TicketHistorial> buscarPorCliente(int idCliente)
             throws SQLException {
-        return dao.listarHistorialTickets(idCliente);
+        return ticketDAO.listarHistorialTickets(idCliente);
     }
 
-    public List<SesionDAO.Cliente> buscarClientes(String texto)
+    public List<ClienteResumen> buscarClientes(String texto)
             throws SQLException {
-        return dao.buscarClientes(texto);
+        return clienteDAO.buscarClientes(texto);
     }
 
-    public List<SesionDAO.Visita> listar(String rol, int idCliente, LocalDate desde,
+    public List<Visita> listar(String rol, int idCliente, LocalDate desde,
             LocalDate hasta, String tipo, String estado) throws SQLException {
-        return dao.listar(rol, idCliente, desde, hasta, tipo, estado);
+        return visitaDAO.listar(rol, idCliente, desde, hasta, tipo, estado);
     }
 
     public void terminar(String rol, int idSesion, boolean cancelar) throws SQLException {
-        dao.terminar(rol, idSesion, cancelar);
+        sesionDAO.terminar(rol, idSesion, cancelar);
     }
 }

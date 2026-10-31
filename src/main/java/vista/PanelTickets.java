@@ -37,16 +37,19 @@ public class PanelTickets extends JPanel {
         setLayout(new BorderLayout());
         setBackground(FONDO);
 
+        // Título
         JLabel titulo = new JLabel("TICKETS");
         titulo.setFont(new Font("Segoe UI", Font.BOLD, 26));
         titulo.setBorder(new EmptyBorder(20, 20, 20, 20));
 
         add(titulo, BorderLayout.NORTH);
 
+        // Cuerpo principal
         JPanel cuerpo = new JPanel(new BorderLayout(20, 0));
         cuerpo.setOpaque(false);
         cuerpo.setBorder(new EmptyBorder(0, 20, 20, 20));
 
+        // Contenedor de tarjetas
         contenedorTickets = new JPanel(new GridLayout(0, 2, 15, 15));
         contenedorTickets.setOpaque(false);
 
@@ -61,6 +64,7 @@ public class PanelTickets extends JPanel {
 
         cuerpo.add(scroll, BorderLayout.CENTER);
 
+        // Métricas
         panelMetricas = new JPanel();
         panelMetricas.setLayout(
                 new BoxLayout(panelMetricas, BoxLayout.Y_AXIS)
@@ -72,19 +76,25 @@ public class PanelTickets extends JPanel {
 
         add(cuerpo, BorderLayout.CENTER);
 
+        // Cargar información real
         cargarTickets();
     }
 
+    // =====================================================
+    // CARGAR TICKETS DESDE MYSQL
+    // =====================================================
     public final void cargarTickets() {
 
         try {
 
+            // Cargar los tickets individuales
             TicketDAO ticketDAO = new TicketDAO();
 
             List<Ticket> tickets = ticketDAO.listarTickets();
 
             mostrarTickets(tickets);
 
+            // Cargar las métricas directamente desde MySQL
             MetricasTicketsDAO metricasDAO = new MetricasTicketsDAO();
 
             MetricasTickets metricas
@@ -121,7 +131,10 @@ public class PanelTickets extends JPanel {
             );
         }
     }
-    
+
+    // =====================================================
+    // MOSTRAR TARJETAS
+    // =====================================================
     private void mostrarTickets(List<Ticket> tickets) {
 
         contenedorTickets.removeAll();
@@ -270,6 +283,9 @@ public class PanelTickets extends JPanel {
         return p;
     }
 
+    // =====================================================
+    // FILAS DE INFORMACIÓN
+    // =====================================================
     private JPanel crearFila(
             String etiqueta,
             String valor,
@@ -302,6 +318,9 @@ public class PanelTickets extends JPanel {
         return fila;
     }
 
+    // =====================================================
+    // MÉTRICAS DEL DÍA
+    // =====================================================
     private void mostrarMetricas(MetricasTickets metricas) {
 
         panelMetricas.removeAll();
@@ -323,6 +342,7 @@ public class PanelTickets extends JPanel {
         panelMetricas.add(fecha);
         panelMetricas.add(Box.createVerticalStrut(15));
 
+        // 1. Monto acumulado
         panelMetricas.add(
                 crearMetrica(
                         "Monto acumulado",
@@ -333,6 +353,7 @@ public class PanelTickets extends JPanel {
 
         panelMetricas.add(Box.createVerticalStrut(12));
 
+        // 2. Sesiones alquiladas
         panelMetricas.add(
                 crearMetrica(
                         "Sesiones alquiladas",
@@ -343,12 +364,14 @@ public class PanelTickets extends JPanel {
 
         panelMetricas.add(Box.createVerticalStrut(12));
 
+        // 3. Equipos utilizados
         panelMetricas.add(
                 crearMetricaEquipos(metricas)
         );
 
         panelMetricas.add(Box.createVerticalStrut(12));
 
+        // 4. Horas alquiladas
         panelMetricas.add(
                 crearMetrica(
                         "Horas alquiladas",
@@ -359,6 +382,7 @@ public class PanelTickets extends JPanel {
 
         panelMetricas.add(Box.createVerticalStrut(12));
 
+        // 5. Promedio por ticket
         panelMetricas.add(
                 crearMetrica(
                         "Promedio por ticket",
@@ -369,6 +393,7 @@ public class PanelTickets extends JPanel {
 
         panelMetricas.add(Box.createVerticalStrut(12));
 
+        // 6. Duración promedio
         panelMetricas.add(
                 crearMetrica(
                         "Duración promedio",
@@ -381,6 +406,7 @@ public class PanelTickets extends JPanel {
 
         panelMetricas.add(Box.createVerticalStrut(12));
 
+        // 7. Ticket de mayor monto
         panelMetricas.add(
                 crearMetrica(
                         "Ticket de mayor monto",
@@ -501,6 +527,9 @@ public class PanelTickets extends JPanel {
         return minutosRestantes + " min";
     }
 
+    // =====================================================
+    // FORMATO MONETARIO
+    // =====================================================
     private String formatoMonto(BigDecimal monto) {
         return String.format(
                 Locale.US,
@@ -509,6 +538,9 @@ public class PanelTickets extends JPanel {
         );
     }
 
+    // =====================================================
+    // LÍNEA PUNTEADA
+    // =====================================================
     private static class LineaPunteada extends JComponent {
 
         LineaPunteada() {

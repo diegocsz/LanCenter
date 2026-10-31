@@ -1,6 +1,8 @@
 package vista;
 
 import dao.SesionDAO;
+import dao.ClienteDAO;
+import modelo.ClienteResumen;
 import modelo.Equipo;
 import java.awt.*;
 import java.sql.SQLException;
@@ -13,7 +15,7 @@ public class DialogSesionAlquiler extends JDialog {
     private final Equipo equipo;
     private final int idEmpleado;
     private final Runnable alGuardar;
-    private final JComboBox<SesionDAO.Cliente> clientes = new JComboBox<>();
+    private final JComboBox<ClienteResumen> clientes = new JComboBox<>();
     private final JComboBox<Integer> minutos = new JComboBox<>();
     private final JLabel fin = new JLabel();
     private static final DateTimeFormatter FORMATO =
@@ -51,7 +53,7 @@ public class DialogSesionAlquiler extends JDialog {
         setSize(510, 350);
         setLocationRelativeTo(padre);
         try {
-            for (SesionDAO.Cliente cliente : new SesionDAO().listarClientes()) clientes.addItem(cliente);
+            for (ClienteResumen cliente : new ClienteDAO().listarClientes()) clientes.addItem(cliente);
             if (clientes.getItemCount() == 0) iniciar.setEnabled(false);
         } catch (SQLException ex) {
             iniciar.setEnabled(false);
@@ -66,7 +68,7 @@ public class DialogSesionAlquiler extends JDialog {
     }
 
     private void iniciar() {
-        SesionDAO.Cliente cliente = (SesionDAO.Cliente) clientes.getSelectedItem();
+        ClienteResumen cliente = (ClienteResumen) clientes.getSelectedItem();
         Integer duracion = (Integer) minutos.getSelectedItem();
         if (cliente == null || duracion == null) return;
         try {

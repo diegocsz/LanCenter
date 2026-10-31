@@ -1,7 +1,8 @@
 package vista;
 
 import controlador.HistorialClientesController;
-import dao.SesionDAO;
+import modelo.ClienteResumen;
+import modelo.Visita;
 import dao.UsuarioDAO;
 import modelo.HistorialClientesModel;
 import java.awt.*;
@@ -26,12 +27,12 @@ public class PanelHistorialClientes extends JPanel {
     private final HistorialClientesController controller =
             new HistorialClientesController(new HistorialClientesModel());
     private final JTextField buscar = new JTextField(16);
-    private final DefaultListModel<SesionDAO.Cliente> modeloSugerencias =
+    private final DefaultListModel<ClienteResumen> modeloSugerencias =
             new DefaultListModel<>();
-    private final JList<SesionDAO.Cliente> sugerencias = new JList<>(modeloSugerencias);
+    private final JList<ClienteResumen> sugerencias = new JList<>(modeloSugerencias);
     private final JScrollPane listaSugerencias = new JScrollPane(sugerencias);
     private final Timer pausaBusqueda = new Timer(250, e -> mostrarSugerencias());
-    private SesionDAO.Cliente clienteSeleccionado;
+    private ClienteResumen clienteSeleccionado;
     private boolean seleccionandoCliente;
     private final JTextField desde = new JTextField(10);
     private final JTextField hasta = new JTextField(10);
@@ -53,7 +54,7 @@ public class PanelHistorialClientes extends JPanel {
     private final JButton cancelar = new JButton("Cancelar sesión activa");
     private final JLabel avisoAcciones =
             new JLabel("Estas acciones solo están disponibles para una sesión ACTIVA.");
-    private List<SesionDAO.Visita> visitas = List.of();
+    private List<Visita> visitas = List.of();
 
     public PanelHistorialClientes(UsuarioDAO.UsuarioAutenticado usuario) {
         if (usuario == null || !"ADMIN".equals(usuario.rol())) throw new SecurityException("Solo administradores");
@@ -162,9 +163,9 @@ public class PanelHistorialClientes extends JPanel {
     private void mostrarSugerencias() {
         if (buscar.getText().isBlank()) return;
         try {
-            List<SesionDAO.Cliente> clientes = controller.buscarClientes(buscar.getText());
+            List<ClienteResumen> clientes = controller.buscarClientes(buscar.getText());
             modeloSugerencias.clear();
-            for (SesionDAO.Cliente cliente : clientes) modeloSugerencias.addElement(cliente);
+            for (ClienteResumen cliente : clientes) modeloSugerencias.addElement(cliente);
             listaSugerencias.setVisible(!clientes.isEmpty());
             revalidate();
             repaint();
@@ -175,7 +176,7 @@ public class PanelHistorialClientes extends JPanel {
         }
     }
 
-    private void seleccionarCliente(SesionDAO.Cliente cliente) {
+    private void seleccionarCliente(ClienteResumen cliente) {
         listaSugerencias.setVisible(false);
         seleccionandoCliente = true;
         buscar.setText(cliente.toString());
@@ -231,7 +232,7 @@ public class PanelHistorialClientes extends JPanel {
             int activas = 0;
             long minutosFinalizados = 0;
             long minutosReales = 0;
-            for (SesionDAO.Visita v : visitas) {
+            for (Visita v : visitas) {
                 long minutosVisita = v.finReal() == null ? 0
                         : Duration.between(v.inicio(), v.finReal()).toMinutes();
                 if ("FINALIZADA".equals(v.estado()) || "CANCELADA".equals(v.estado())) {
@@ -331,7 +332,7 @@ public class PanelHistorialClientes extends JPanel {
             JOptionPane.showMessageDialog(this, "Selecciona una sesión de la tabla.");
             return;
         }
-        SesionDAO.Visita visita = visitas.get(fila);
+        Visita visita = visitas.get(fila);
         if (!"ACTIVA".equals(visita.estado())) {
             JOptionPane.showMessageDialog(this, "La sesión seleccionada ya terminó.");
             return;

@@ -1,6 +1,7 @@
 package controlador;
 
-import dao.SesionDAO;
+import modelo.ClienteResumen;
+import modelo.Visita;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.List;
@@ -13,11 +14,11 @@ public class HistorialClientesController {
         this.modelo = modelo;
     }
 
-    public List<SesionDAO.Cliente> buscarClientes(String texto) throws SQLException {
+    public List<ClienteResumen> buscarClientes(String texto) throws SQLException {
         return modelo.buscarClientes(texto);
     }
 
-    public List<SesionDAO.Visita> listar(String rol, int idCliente, LocalDate desde,
+    public List<Visita> listar(String rol, int idCliente, LocalDate desde,
             LocalDate hasta, String tipo, String estado) throws SQLException {
         return modelo.listar(rol, idCliente, desde, hasta, tipo, estado);
     }
